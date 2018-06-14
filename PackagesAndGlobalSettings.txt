@@ -1,0 +1,26 @@
+# ---- data prep/wrangling
+library(tidyverse)
+library(lubridate)
+
+# ---- stats & plots
+library(nlme)				# Linear Mixed-Models
+library(lme4)				# Genearlized Linear Mixed-Models
+library(predictmeans) 		# Cook's Distance from lme object
+library(multcomp)			# Multiple comparisons
+library(minpack.lm) 		# fitting nonlinear models
+
+
+# ---- plotting
+library(grid)  		# for ggplot's 'unit' - used to scale legend's text
+library(gridExtra)  		# for ggplot's 'unit' - used to scale legend's text
+library(splines)        # for manual model fitting of residuals
+theme_set(theme_bw())
+
+# plotting - color bind friendly palettes: http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/
+
+cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+# default colors for speed levels 
+cols1 <- cbbPalette[6]
+cols10 <- cbbPalette[7]
+
