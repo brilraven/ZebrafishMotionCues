@@ -1,7 +1,8 @@
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 #
 #		Data Analysis: Experiment 1 :: Individual effects
-#   Updated: Friday, June 13, 2018
+#   Updated: Thursday June 14, 2018
+#   Authors contributing to analyses: Bertrand Lemasson & Colby Tanner
 #   Citation: Lemasson, B., Tanner, C. Woodley, C., Threadgill, T., Qarqish, S., and Smith, D. 2018. Motion Cues tune social influence in shoaling fish
 #
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -154,6 +155,18 @@ data.t.s <- data.t %>%
   filter(zone == "DECISION") %>%
   arrange(Date, Day, Fish, Speed, Coherency, zone, Decision, Tmax)
 
+# ---------------
+# quick plots
+# ---------------
+  # ggplot(data.t.s, aes(y=log(Tmax), x=Coherency,color=factor(Speed))) + geom_point()
+
+# summarize
+data.tS.s <- data.t.s %>% 
+  group_by(Speed,Coherency) %>% 
+  summarise(T.m = mean(Tmax), T.var = var(Tmax), T.se = sd(Tmax)/sqrt(n())) 
+
+ggplot(data.tS.s, aes(y=T.m, x=Coherency,color=factor(Speed))) + 
+  geom_errorbar(aes(ymax = T.m + T.se, ymin=T.m - T.se), width=0.02) + geom_point()
 
 # -------------------------------
 # LMM: Time to Decide, TD - N.S. No interaction between Coherency & Speed, no effect of either factor 
@@ -215,9 +228,23 @@ mDecisionTimeDiagnostics <- grid.arrange(p1, p2, p3, p4, p5,nrow=2,top = textGro
 #     When Speed = 10, accuracy jumps up significantly across coherency levels equally
 
 
-# -------------------------
+# ---------------
+# quick plots
+# ---------------
+# [not very useful] ggplot(data.e, aes(y=Decision, x=Coherency,color=factor(Speed)))  + geom_jitter()
+
+# summarize
+data.eA.s <- data.e %>% 
+  group_by(Speed,Coherency) %>% 
+  summarise(D.m = mean(Decision), D.var = var(Decision), D.se = sd(Decision)/sqrt(n())) 
+
+ggplot(data.eA.s, aes(y=D.m, x=Coherency,color=factor(Speed))) + 
+  geom_errorbar(aes(ymax = D.m + D.se, ymin=D.m - D.se), width=0.02) + geom_point()
+
+# -------------------------------
 # Main GLMM
-# -------------------------
+# -------------------------------
+
 mDA1.0 <- glmer(Decision ~ Speed * Coherency + (1|Fish), data = data.e, family='binomial')
 
 summary(mDA1.0)
@@ -329,9 +356,6 @@ summary(glht(mDA4.1, linfct = mcp(Coherency='Tukey')), test=adjusted('BH'))
 # ----- Fig. 2a
 # =======================
 
-data.eA.s <- data.e %>% 
-  group_by(Speed,Coherency) %>% 
-  summarise(R.m = mean(Decision), R.var = var(Decision), R.se = sd(Decision)/sqrt(n())) 
 
 gpFig2a_Accuracy <- ggplot(data.eA.s, aes(y=R.m, x=Coherency,color=factor(Speed))) + 
   geom_line() +             # aes(linetype = factor(Speed))
@@ -359,13 +383,70 @@ gpFig2a_Accuracy <- ggplot(data.eA.s, aes(y=R.m, x=Coherency,color=factor(Speed)
 
 ggsave(gpFig2a_Accuracy, file = "./Figures/Fig2a_Exp1_Accuracy_SE.jpeg",units="in",width = 3,height=3.25,dpi=100)
 
+####################################
+# Figure  2, panels b-e
+####################################
 
-# ==================================================
-# ----- Fig. 2b-e panel
-# ==================================================
+# ----- pixel conversion
+# 3.5 cm/36.5 pixels ~ 0.1 cm/pixel
+c1 = 0.09589041 
+
+# 'decision zone' (pixels)
+cx <- 950*c1; cy <- 475 *c1       
+r = 250 * c1
+cyr = cy
+# 120 # holding gate
+
+#[original] pd = data.t 
+pd = data.t %>% subset(Coherency > 0)
+
+pd$Speed = factor(pd$Speed)
+levels(pd$Speed) <- c(expression(Delta~italic(v)==1), expression(Delta~italic(v)==10))
+
+gpS <- ggplot(aes(x = CDT*c1, y = z.spd*3.515342,colour = factor(Decision), fill = factor(Decision), name="Decision"), data = pd) + 
+  
+        geom_smooth(alpha = 0.5) + # , method = "loess"
+        geom_vline(xintercept = c(350.85)*c1,linetype=2, size = 0.5) +
+        scale_color_manual(values=c("grey", "slategrey"), name="Decision",labels=c("Incorrect","Correct")) +
+        scale_fill_manual(values=c("grey", "slategrey"), name="Decision",labels=c("Incorrect","Correct")) +
+        facet_grid(.~Speed, labeller = label_parsed) + 
+        #xlab("Distance traveled (cm)") +
+        xlab("") +
+        ylab("Fish speed (cm/s)") +
+        theme(legend.title = element_text(size=10),
+              legend.position = "top",
+              #legend.background = element_rect(colour ="darkblue"),
+              legend.box.spacing = margin(t = 0, b = 0, unit = "in"),
+              axis.title.x = element_text(face="bold",size=10,vjust=-0.25), 
+              axis.title.y = element_text(face="bold",size=10,vjust= 1),
+              axis.text.x = element_text(colour="black",size=9),
+              axis.text.y = element_text(colour="black",size=9))
 
 
+# -------------------------------------
+# turning arc as a function of 
+# distance traveled
+# -------------------------------------
 
+gpT <- ggplot(aes(x = CDT*c1, y = sin(turnangle.c),colour = factor(Decision), fill = factor(Decision), name="Decision"), data = pd) +  
+  
+        geom_smooth(alpha = 0.5) +
+        geom_vline(xintercept = c(350.85)*c1,linetype=2, size = 0.5) +
+        scale_color_manual(values=c("grey", "slategrey"), name="Decision",labels=c("Incorrect","Correct")) +
+        scale_fill_manual(values=c("grey", "slategrey"), name="Decision",labels=c("Incorrect","Correct")) +
+        facet_grid(.~Speed, labeller = label_parsed) + 
+        coord_cartesian(ylim=c(0, 0.3)) +
+        xlab("Distance traveled (cm)") +
+        ylab("Sine (Turning arc)") +
+        theme(legend.title = element_text(size=10),
+              legend.position = "none",
+              axis.title.x = element_text(face="bold",size=10,vjust=-0.25), 
+              axis.title.y = element_text(face="bold",size=10,vjust= 1),
+              axis.text.x = element_text(colour="black",size=9),
+              axis.text.y = element_text(colour="black",size=9))
+      
+ggsave(gpS, file = "./Figures/gpFig2_bd.jpeg",units="in",width = 3.5,height=2.25,dpi=100)
+ggsave(gpT, file = "./Figures/gpFig2_ce.jpeg",units="in",width = 3.5,height=2,dpi=100)
 
 
 
@@ -395,7 +476,7 @@ satBoxPlots = ggplot(df.p.s, aes(factor(Decision),Tmax, fill=Speed)) + geom_boxp
   facet_grid(.~Speed, labeller = label_parsed) + 
   theme(legend.position = 'none')
 
-ggsave(satBoxPlots, file = "./Figures/SI_SATBoxPlts.jpeg",units = "in",width = 5,height=2.5, dpi=300)  
+ggsave(satBoxPlots, file = "./Figures/SI_SATBoxPlts.jpeg",units = "in",width = 5,height=2.5, dpi=100)  
 
 # -----------------------
 # Speed = 1
@@ -403,11 +484,11 @@ ggsave(satBoxPlots, file = "./Figures/SI_SATBoxPlts.jpeg",units = "in",width = 5
 
 df1 = data.t %>% subset(Speed == 1  & zone == 'DECISION')
 
-
 df1.s =  df1 %>%
   group_by(Fish, Coherency,Decision) %>%
   summarise(Tmax = max(CTTxZONE), spd.m = mean(z.spd), spd.sd = sd(z.spd))
 
+# N.S.
 wilcox.test(subset(df1.s, Decision == 0 & Coherency > 0)$Tmax, subset(df1.s, Decision == 1 & Coherency > 0)$Tmax) # N.S.
 
 
@@ -416,7 +497,6 @@ wilcox.test(subset(df1.s, Decision == 0 & Coherency > 0)$Tmax, subset(df1.s, Dec
 # -----------------------
 
 df10 = data.t %>% subset(Speed == 10 & zone == 'DECISION')
-
 
 
 df10.s =  df10 %>%
@@ -454,104 +534,6 @@ mean(subset(df10.s, Coherency > 0 & Decision == 1)$Tmax)
 # [1] 2.550725
 sd(subset(df10.s, Coherency > 0 & Decision == 1)$Tmax)
 # [1] 1.962808
-
-
-####################################
-# Figure for Supplemental
-####################################
-
-# -------------------------------------------------------------------
-# plotting v1 & v10 together
-
-df.p = data.t %>% subset(Coherency > 0 & zone == 'DECISION')
-df.p$Speed = factor(df.p$Speed)
-levels(df.p$Speed) <- c(expression(Delta~italic(v)==1), expression(Delta~italic(v)==10))
-
-
-df.p.s =  df.p %>%
-  group_by(Fish, Speed,Decision) %>%
-  summarise(Tmax = max(CTTxZONE))
-
-satBoxPlots = ggplot(df.p.s, aes(factor(Decision),Tmax, fill=Speed)) + geom_boxplot() +
-  scale_fill_manual(values=c("#cccccc", "#636363"), labels=c("Incorrect","Correct")) +
-  xlab("Decision score") + ylab("Decision Time (s)") + scale_x_discrete(labels=c("Incorrect", "Correct")) +
-  facet_grid(.~Speed, labeller = label_parsed) + 
-  theme(legend.position = 'none')
-
-ggsave(satBoxPlots, file = "./Figures/SI2satBoxPlts.jpeg",units="in",width = 3.5,height=2,dpi=300)
-
-
-
-
-####################################
-# Figure  2, panels b-e
-####################################
-
-# ----- pixel conversion
-# 3.5 cm/36.5 pixels ~ 0.1 cm/pixel
-c1 = 0.09589041 
-
-# 'decision zone' (pixels)
-cx <- 950*c1; cy <- 475 *c1       
-r = 250 * c1
-cyr = cy
-# 120 # holding gate
-
-#[original] pd = data.t 
-pd = data.t %>% subset(Coherency > 0)
-
-pd$Speed = factor(pd$Speed)
-levels(pd$Speed) <- c(expression(Delta~italic(v)==1), expression(Delta~italic(v)==10))
-
-gpS <- ggplot(aes(x = CDT*c1, y = z.spd*3.515342,colour = factor(Decision), fill = factor(Decision), name="Decision"), data = pd) + 
-  
-  geom_smooth(alpha = 0.5) + # , method = "loess"
-  geom_vline(xintercept = c(350.85)*c1,linetype=2, size = 0.5) +
-  scale_color_manual(values=c("grey", "slategrey"), name="Decision",labels=c("Incorrect","Correct")) +
-  scale_fill_manual(values=c("grey", "slategrey"), name="Decision",labels=c("Incorrect","Correct")) +
-  
-  facet_grid(.~Speed, labeller = label_parsed) + 
-  #xlab("Distance traveled (cm)") +
-  xlab("") +
-  
-  ylab("Fish speed (cm/s)") +
-  
-  theme(legend.title = element_text(size=10),
-        legend.position = "top",
-        #legend.background = element_rect(colour ="darkblue"),
-        legend.box.spacing = margin(t = 0, b = 0, unit = "in"),
-        axis.title.x = element_text(face="bold",size=10,vjust=-0.25), 
-        axis.title.y = element_text(face="bold",size=10,vjust= 1),
-        axis.text.x = element_text(colour="black",size=9),
-        axis.text.y = element_text(colour="black",size=9))
-
-
-# -------------------------------------
-# turning arc as a function of 
-# distance traveled
-# -------------------------------------
-
-gpT <- ggplot(aes(x = CDT*c1, y = sin(turnangle.c),colour = factor(Decision), fill = factor(Decision), name="Decision"), data = pd) +  
-  
-  geom_smooth(alpha = 0.5) +
-  geom_vline(xintercept = c(350.85)*c1,linetype=2, size = 0.5) +
-  scale_color_manual(values=c("grey", "slategrey"), name="Decision",labels=c("Incorrect","Correct")) +
-  scale_fill_manual(values=c("grey", "slategrey"), name="Decision",labels=c("Incorrect","Correct")) +
-  facet_grid(.~Speed, labeller = label_parsed) + 
-  coord_cartesian(ylim=c(0, 0.3)) +
-  
-  #geom_rug(col=rgb(0.5,0.5,0.5,alpha=0.1)) +
-  xlab("Distance traveled (cm)") +
-  ylab("Sine (Turning arc)") +
-  theme(legend.title = element_text(size=10),
-        legend.position = "none",
-        axis.title.x = element_text(face="bold",size=10,vjust=-0.25), 
-        axis.title.y = element_text(face="bold",size=10,vjust= 1),
-        axis.text.x = element_text(colour="black",size=9),
-        axis.text.y = element_text(colour="black",size=9))
-
-ggsave(gpS, file = "./Figures/gpFig2_bd.png",units="in",width = 3.5,height=2.25,dpi=300)
-ggsave(gpT, file = "./Figures/gpFig2_ce.png",units="in",width = 3.5,height=2,dpi=300)
 
 
 
