@@ -1,6 +1,10 @@
 ### Contributing authors: 
 * [Bertrand Lemasson](brilraven@gmail.com)
-* [Colby Tanner](ctanner@misericordia.edu)  
+* [Colby Tanner](ctanner@misericordia.edu)
+* Christa Woodley
+* Tammy Threadgill
+* Shea Qarqish
+* David Smith
 
 June 14, 2018
 
