@@ -7,12 +7,6 @@
 #
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-sessionInfo()
-# R version 3.4.1 (2017-06-30)
-# Platform: x86_64-apple-darwin15.6.0 (64-bit)
-# Running under: macOS High Sierra 10.13.5
-
-
 # ===================================  
 # workspace
 # ===================================  
@@ -95,7 +89,11 @@ data.t
 #   Coherency (0,0.33, 0.66, 1)
 #
 # (track data): 
+#   z.spd - fish speed in body lengths/s
 #   zone - fish location in maze in a given frame (decision, holding)
+#   CDT - cummulative distance travelled from the holding area
+#   CDT.y - CDT along the y-axis only
+
 # ---------------------------------------
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -107,9 +105,9 @@ data.t
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-# ---------------------------------------
+# ==============================
 # Movement bias? - No 
-# ---------------------------------------
+# ==============================
 
 # --- bias in leader silhouettes?
 table(data.e$RewardArm)
@@ -134,7 +132,7 @@ binom.test(x=16,n=16 + 24,p=0.5)  # N.S.
 
 
 # ---------------------------------------
-# LMM & GLMM 
+# LMMs & GLMMs
 # ---------------------------------------
 
 # --- Treat Fish id a factor 
@@ -209,7 +207,7 @@ E <- residuals(mod,type="pearson")
 p4 <- ggplot(aes(x=resid), data = mdata2) + geom_histogram(fill="grey",color="black") + xlab("Residuals") 
 p5 <- ggplot(aes(sample=resid), data = mdata2) + stat_qq()
 
-mDecisionTimeDiagnostics <- grid.arrange(p1, p2, p3, p4, p5,nrow=2,top = textGrob("Decision time: model mTD1.0"))
+grid.arrange(p1, p2, p3, p4, p5,nrow=2,top = textGrob("Decision time: model mTD1.0"))
 
 
 # ==============================
@@ -387,15 +385,10 @@ ggsave(gpFig2a_Accuracy, file = "./Figures/Fig2a_Exp1_Accuracy_SE.jpeg",units="i
 # Figure  2, panels b-e
 ####################################
 
-# ----- pixel conversion
+# ----- pixel conversion to cm (based on the average fish length measured in cm (3.5) and pixels (36.5))
 # 3.5 cm/36.5 pixels ~ 0.1 cm/pixel
-c1 = 0.09589041 
-
-# 'decision zone' (pixels)
-cx <- 950*c1; cy <- 475 *c1       
-r = 250 * c1
-cyr = cy
-# 120 # holding gate
+c1 = 0.09589041
+# 350.85 - location of the decision zone (in pixels)
 
 #[original] pd = data.t 
 pd = data.t %>% subset(Coherency > 0)
